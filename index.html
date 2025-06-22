@@ -68,14 +68,14 @@
     <div id="homePage" class="page active">
       <h1>Panda Flash Wallet – Powered by BabyPanda Flash $BPF</h1>
 
-      <button onclick="createWallet()">🧠 Create Wallet</button>
+      <button onclick="handleCreateWallet()">🧠 Create Wallet</button>
       <button onclick="goToPage('importPage')">📥 Import Wallet</button>
     </div>
 
-    <!-- PAGE: Backup Mnemonics Only -->
+    <!-- PAGE: Back Up Mnemonics -->
     <div id="createPage" class="page">
       <h1>🔐 Back Up Mnemonics</h1>
-      <div id="mnemonicBox" class="info-box"></div>
+      <div id="mnemonicBox" class="info-box">Loading...</div>
       <button onclick="copyMnemonics()">📋 Copy Mnemonics</button><br/>
       <button class="back-btn" onclick="goToPage('homePage')">⬅ Back</button>
     </div>
@@ -100,11 +100,12 @@
       document.getElementById(pageId).classList.add('active');
     }
 
-    function createWallet() {
+    function handleCreateWallet() {
       const wallet = ethers.Wallet.createRandom();
       currentWallet = wallet;
       generatedMnemonic = wallet.mnemonic.phrase;
 
+      // tampilkan mnemonic dan pindah halaman
       document.getElementById("mnemonicBox").innerHTML = `<strong>${generatedMnemonic}</strong>`;
       goToPage('createPage');
     }
