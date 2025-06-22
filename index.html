@@ -38,7 +38,7 @@
 
   <!-- Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.7.0/dist/ethers.umd.min.js"></script>
-  <script src="https://unpkg.com/bitcoinjs-lib@6.1.0/dist/bitcoinjs-lib.min.js"></script>
+  <script src="https://unpkg.com/bitcoinjs-lib@4.0.3/dist/bitcoinjs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.76.0/lib/index.iife.js"></script>
 
   <script>
@@ -60,11 +60,11 @@
         const solKeypair = solanaWeb3.Keypair.fromSeed(solSeed);
         document.getElementById('solanaAddress').textContent = solKeypair.publicKey.toBase58();
 
-        // Bitcoin
-        const bitcoin = window.bitcoinjs; // ✅ Fix: use window.bitcoinjs
-        const root = bitcoin.bip32.fromSeed(solSeed);
+        // Bitcoin - pakai bitcoinjs-lib 4.0.3
+        const bitcoin = window.bitcoin;
+        const root = bitcoin.HDNode.fromSeedBuffer(Buffer.from(solSeed));
         const child = root.derivePath("m/44'/0'/0'/0/0");
-        const { address } = bitcoin.payments.p2pkh({ pubkey: child.publicKey });
+        const { address } = bitcoin.payments.p2pkh({ pubkey: child.keyPair.getPublicKeyBuffer() });
         document.getElementById('btcAddress').textContent = address;
 
       } catch (e) {
