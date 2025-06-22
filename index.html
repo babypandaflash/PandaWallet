@@ -45,15 +45,15 @@
   <script>
     async function generateWallet() {
       try {
-        // 1️⃣ Generate mnemonic using bip39 (for SUI compatibility)
+        // ✅ Use bip39 to generate mnemonic compatible with Sui
         const mnemonic = bip39.generateMnemonic();
         document.getElementById('mnemonic').textContent = mnemonic;
 
-        // 2️⃣ EVM address (ethers.js)
+        // ✅ EVM (ETH, BSC, Polygon)
         const evmWallet = ethers.Wallet.fromPhrase(mnemonic);
         document.getElementById('evmAddress').textContent = evmWallet.address;
 
-        // 3️⃣ Solana address (from hashed mnemonic)
+        // ✅ Solana (hashed mnemonic)
         const encoder = new TextEncoder();
         const seedBytes = encoder.encode(mnemonic);
         const hashBuffer = await crypto.subtle.digest('SHA-256', seedBytes);
@@ -61,11 +61,10 @@
         const solKeypair = solanaWeb3.Keypair.fromSeed(solSeed);
         document.getElementById('solanaAddress').textContent = solKeypair.publicKey.toBase58();
 
-        // 4️⃣ Sui address
-        const { Ed25519Keypair, fromB64, derivePath, mnemonicToSeed } = sui;
+        // ✅ Sui (using sui.js)
+        const { Ed25519Keypair } = sui;
         const suiKeypair = await Ed25519Keypair.deriveKeypair(mnemonic);
-        const suiPublicKey = suiKeypair.getPublicKey();
-        const suiAddress = suiPublicKey.toSuiAddress();
+        const suiAddress = suiKeypair.getPublicKey().toSuiAddress();
         document.getElementById('suiAddress').textContent = suiAddress;
 
       } catch (e) {
