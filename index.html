@@ -5,15 +5,16 @@
   <title>Multi-Network Crypto Wallet</title>
   <style>
     body {
+      background: #111;
+      color: #eee;
       font-family: Arial, sans-serif;
-      background: #0f0f0f;
-      color: #ffffff;
       text-align: center;
       padding: 20px;
     }
     button {
-      padding: 10px 20px;
       font-size: 18px;
+      padding: 10px 20px;
+      margin: 20px 0;
       cursor: pointer;
     }
     p, li {
@@ -25,46 +26,54 @@
   <h1>Multi-Network Crypto Wallet</h1>
   <button id="generateBtn">Generate New Wallet</button>
 
-  <h2>Seed Phrase:</h2>
-  <p id="mnemonic"></p>
+  <h2>Seed Phrase</h2>
+  <p id="mnemonic">---</p>
 
-  <h2>Addresses:</h2>
-  <ul>
-    <li>🔑 Solana: <span id="solanaAddress"></span></li>
-    <li>🔑 EVM (Ethereum, BSC): <span id="evmAddress"></span></li>
-    <li>🔑 Bitcoin: <span id="btcAddress"></span></li>
+  <h2>Addresses</h2>
+  <ul style="list-style:none; padding:0;">
+    <li>🔑 <b>Solana:</b> <span id="solanaAddress">---</span></li>
+    <li>🔑 <b>EVM (Ethereum/BSC):</b> <span id="evmAddress">---</span></li>
+    <li>🔑 <b>Bitcoin:</b> <span id="btcAddress">---</span></li>
   </ul>
 
-  <!-- LIBRARIES -->
+  <!-- Correct Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/bip39@3.0.4/dist/index.browser.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.7.0/dist/ethers.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bitcoinjs-lib@6.1.0/index.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.76.0/lib/index.iife.js"></script>
 
-  <!-- ALL LOGIC INLINE -->
+  <!-- Inline JS -->
   <script>
-    document.getElementById("generateBtn").onclick = async () => {
-      // Generate mnemonic
+    const generateBtn = document.getElementById("generateBtn");
+
+    generateBtn.addEventListener("click", async () => {
+      // Make sure libraries are loaded
+      if (!bip39 || !ethers || !bitcoinjs || !solanaWeb3) {
+        alert("Libraries failed to load!");
+        return;
+      }
+
+      // 1) Generate seed phrase
       const mnemonic = bip39.generateMnemonic();
-      document.getElementById("mnemonic").innerText = mnemonic;
+      document.getElementById("mnemonic").textContent = mnemonic;
 
-      // ===== EVM (Ethereum, BSC, etc.) =====
+      // 2) EVM Wallet (Ethereum/BSC)
       const evmWallet = ethers.Wallet.fromPhrase(mnemonic);
-      document.getElementById("evmAddress").innerText = evmWallet.address;
+      document.getElementById("evmAddress").textContent = evmWallet.address;
 
-      // ===== Solana =====
+      // 3) Solana Wallet
       const seed = await bip39.mnemonicToSeed(mnemonic);
       const seedBuffer = seed.slice(0, 32);
-      const solanaKeypair = solanaWeb3.Keypair.fromSeed(seedBuffer);
-      document.getElementById("solanaAddress").innerText = solanaKeypair.publicKey.toBase58();
+      const solKeypair = solanaWeb3.Keypair.fromSeed(seedBuffer);
+      document.getElementById("solanaAddress").textContent = solKeypair.publicKey.toBase58();
 
-      // ===== Bitcoin =====
+      // 4) Bitcoin Wallet
       const bitcoin = bitcoinjs;
       const root = bitcoin.bip32.fromSeed(seedBuffer);
       const child = root.derivePath("m/44'/0'/0'/0/0");
       const { address } = bitcoin.payments.p2pkh({ pubkey: child.publicKey });
-      document.getElementById("btcAddress").innerText = address;
-    };
+      document.getElementById("btcAddress").textContent = address;
+    });
   </script>
 </body>
 </html>
