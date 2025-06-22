@@ -72,10 +72,10 @@
       <button onclick="goToPage('importPage')">📥 Import Wallet</button>
     </div>
 
-    <!-- PAGE: Back Up Mnemonics -->
+    <!-- PAGE: Back Up Mnemonics (Tetap disatukan) -->
     <div id="createPage" class="page">
       <h1>🔐 Back Up Mnemonics</h1>
-      <div id="mnemonicBox" class="info-box">Loading...</div>
+      <div id="mnemonicBox" class="info-box">Mnemonic phrase akan muncul di sini...</div>
       <button onclick="copyMnemonics()">📋 Copy Mnemonics</button><br/>
       <button class="back-btn" onclick="goToPage('homePage')">⬅ Back</button>
     </div>
@@ -105,7 +105,6 @@
       currentWallet = wallet;
       generatedMnemonic = wallet.mnemonic.phrase;
 
-      // tampilkan mnemonic dan pindah halaman
       document.getElementById("mnemonicBox").innerHTML = `<strong>${generatedMnemonic}</strong>`;
       goToPage('createPage');
     }
