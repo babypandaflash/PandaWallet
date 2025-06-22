@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Panda Flash Wallet</title>
+  <script src="https://cdn.jsdelivr.net/npm/ethers/dist/ethers.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #fefefe;
+      color: #222;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+      text-align: center;
+    }
+    h1 {
+      font-size: 22px;
+      margin-bottom: 20px;
+    }
+    button {
+      margin: 10px;
+      padding: 10px 20px;
+      font-size: 16px;
+      border-radius: 8px;
+      background: #222;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    .back-btn {
+      background: #888;
+    }
+    input {
+      padding: 10px;
+      margin-top: 10px;
+      width: 80%;
+      font-size: 16px;
+    }
+    .info-box {
+      background: #f3f3f3;
+      padding: 15px;
+      margin-top: 20px;
+      border-radius: 10px;
+      word-break: break-word;
+      text-align: center;
+      font-size: 18px;
+    }
+    .info-box strong {
+      color: #444;
+    }
+    .page {
+      display: none;
+    }
+    .page.active {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <!-- PAGE: Home -->
+    <div id="homePage" class="page active">
+      <h1>Panda Flash Wallet – Powered by BabyPanda Flash $BPF</h1>
+
+      <button onclick="createWallet()">🧠 Create Wallet</button>
+      <button onclick="goToPage('importPage')">📥 Import Wallet</button>
+    </div>
+
+    <!-- PAGE: Backup Mnemonics Only -->
+    <div id="createPage" class="page">
+      <h1>🔐 Back Up Mnemonics</h1>
+      <div id="mnemonicBox" class="info-box"></div>
+      <button onclick="copyMnemonics()">📋 Copy Mnemonics</button><br/>
+      <button class="back-btn" onclick="goToPage('homePage')">⬅ Back</button>
+    </div>
+
+    <!-- PAGE: Import Wallet -->
+    <div id="importPage" class="page">
+      <h1>Import Wallet</h1>
+      <input type="text" id="importInput" placeholder="Enter Mnemonic or Private Key" /><br/>
+      <button onclick="importWallet()">Import Now</button>
+      <div id="importResult" class="info-box"></div>
+      <button class="back-btn" onclick="goToPage('homePage')">⬅ Back</button>
+    </div>
+
+  </div>
+
+  <script>
+    let currentWallet = null;
+    let generatedMnemonic = '';
+
+    function goToPage(pageId) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById(pageId).classList.add('active');
+    }
+
+    function createWallet() {
+      const wallet = ethers.Wallet.createRandom();
+      currentWallet = wallet;
+      generatedMnemonic = wallet.mnemonic.phrase;
+
+      document.getElementById("mnemonicBox").innerHTML = `<strong>${generatedMnemonic}</strong>`;
+      goToPage('createPage');
+    }
+
+    function copyMnemonics() {
+      if (!generatedMnemonic) {
+        alert("No mnemonic to copy.");
+        return;
+      }
+      navigator.clipboard.writeText(generatedMnemonic)
+        .then(() => alert("Mnemonic copied to clipboard!"))
+        .catch(() => alert("Failed to copy mnemonic."));
+    }
+
+    function importWallet() {
+      const input = document.getElementById("importInput").value.trim();
+      const output = document.getElementById("importResult");
+
+      try {
+        let wallet;
+
+        if (input.split(" ").length >= 12) {
+          wallet = ethers.Wallet.fromMnemonic(input);
+        } else {
+          wallet = new ethers.Wallet(input);
+        }
+
+        currentWallet = wallet;
+
+        output.innerHTML = `
+          <h3>Wallet Imported (Ethereum/EVM)</h3>
+          <p><strong>Address:</strong> ${wallet.address}</p>
+          <p><strong>Private Key:</strong> ${wallet.privateKey}</p>
+        `;
+      } catch (e) {
+        output.innerHTML = `<p style="color:red;">Invalid mnemonic or private key.</p>`;
+      }
+    }
+  </script>
+</body>
+</html>
+
