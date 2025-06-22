@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Multi-Network Crypto Wallet</title>
+  <title>Multi-Network Wallet</title>
   <style>
     body {
       background: #111;
@@ -24,7 +24,7 @@
 </head>
 <body>
   <h1>Multi-Network Crypto Wallet</h1>
-  <button id="generateBtn">Generate New Wallet</button>
+  <button onclick="generateWallet()">Generate New Wallet</button>
 
   <h2>Seed Phrase</h2>
   <p id="mnemonic">---</p>
@@ -36,44 +36,41 @@
     <li>🔑 <b>Bitcoin:</b> <span id="btcAddress">---</span></li>
   </ul>
 
-  <!-- Correct Libraries -->
+  <!-- Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/bip39@3.0.4/dist/index.browser.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.7.0/dist/ethers.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bitcoinjs-lib@6.1.0/index.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.76.0/lib/index.iife.js"></script>
 
-  <!-- Inline JS -->
   <script>
-    const generateBtn = document.getElementById("generateBtn");
+    async function generateWallet() {
+      try {
+        // Generate mnemonic
+        const mnemonic = bip39.generateMnemonic();
+        document.getElementById('mnemonic').textContent = mnemonic;
 
-    generateBtn.addEventListener("click", async () => {
-      // Make sure libraries are loaded
-      if (!bip39 || !ethers || !bitcoinjs || !solanaWeb3) {
-        alert("Libraries failed to load!");
-        return;
+        // EVM (Ethereum/BSC)
+        const evmWallet = ethers.Wallet.fromPhrase(mnemonic);
+        document.getElementById('evmAddress').textContent = evmWallet.address;
+
+        // Solana
+        const seedBuffer = await bip39.mnemonicToSeed(mnemonic);
+        const solSeed = seedBuffer.slice(0, 32);
+        const solKeypair = solanaWeb3.Keypair.fromSeed(solSeed);
+        document.getElementById('solanaAddress').textContent = solKeypair.publicKey.toBase58();
+
+        // Bitcoin
+        const bitcoin = bitcoinjs;
+        const root = bitcoin.bip32.fromSeed(solSeed);
+        const child = root.derivePath("m/44'/0'/0'/0/0");
+        const { address } = bitcoin.payments.p2pkh({ pubkey: child.publicKey });
+        document.getElementById('btcAddress').textContent = address;
+
+      } catch (e) {
+        console.error(e);
+        alert("Error: " + e.message);
       }
-
-      // 1) Generate seed phrase
-      const mnemonic = bip39.generateMnemonic();
-      document.getElementById("mnemonic").textContent = mnemonic;
-
-      // 2) EVM Wallet (Ethereum/BSC)
-      const evmWallet = ethers.Wallet.fromPhrase(mnemonic);
-      document.getElementById("evmAddress").textContent = evmWallet.address;
-
-      // 3) Solana Wallet
-      const seed = await bip39.mnemonicToSeed(mnemonic);
-      const seedBuffer = seed.slice(0, 32);
-      const solKeypair = solanaWeb3.Keypair.fromSeed(seedBuffer);
-      document.getElementById("solanaAddress").textContent = solKeypair.publicKey.toBase58();
-
-      // 4) Bitcoin Wallet
-      const bitcoin = bitcoinjs;
-      const root = bitcoin.bip32.fromSeed(seedBuffer);
-      const child = root.derivePath("m/44'/0'/0'/0/0");
-      const { address } = bitcoin.payments.p2pkh({ pubkey: child.publicKey });
-      document.getElementById("btcAddress").textContent = address;
-    });
+    }
   </script>
 </body>
 </html>
