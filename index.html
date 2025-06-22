@@ -33,30 +33,40 @@
   <ul style="list-style:none; padding:0;">
     <li>🔑 <b>Solana:</b> <span id="solanaAddress">---</span></li>
     <li>🔑 <b>EVM (ETH, BSC, Polygon, etc):</b> <span id="evmAddress">---</span></li>
+    <li>🔑 <b>Sui:</b> <span id="suiAddress">---</span></li>
   </ul>
 
   <!-- Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.7.0/dist/ethers.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.76.0/lib/index.iife.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mysten/sui.js/dist/browser/sui.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bip39@3.0.4/dist/bip39.browser.min.js"></script>
 
   <script>
     async function generateWallet() {
       try {
-        // Create random mnemonic & wallet using ethers
-        const wallet = ethers.Wallet.createRandom();
-        const mnemonic = wallet.mnemonic.phrase;
+        // 1️⃣ Generate mnemonic using bip39 (for SUI compatibility)
+        const mnemonic = bip39.generateMnemonic();
         document.getElementById('mnemonic').textContent = mnemonic;
 
-        // EVM address (valid for ETH, BSC, Polygon, etc.)
-        document.getElementById('evmAddress').textContent = wallet.address;
+        // 2️⃣ EVM address (ethers.js)
+        const evmWallet = ethers.Wallet.fromPhrase(mnemonic);
+        document.getElementById('evmAddress').textContent = evmWallet.address;
 
-        // Solana address (from hashed mnemonic)
+        // 3️⃣ Solana address (from hashed mnemonic)
         const encoder = new TextEncoder();
         const seedBytes = encoder.encode(mnemonic);
         const hashBuffer = await crypto.subtle.digest('SHA-256', seedBytes);
         const solSeed = new Uint8Array(hashBuffer).slice(0, 32);
         const solKeypair = solanaWeb3.Keypair.fromSeed(solSeed);
         document.getElementById('solanaAddress').textContent = solKeypair.publicKey.toBase58();
+
+        // 4️⃣ Sui address
+        const { Ed25519Keypair, fromB64, derivePath, mnemonicToSeed } = sui;
+        const suiKeypair = await Ed25519Keypair.deriveKeypair(mnemonic);
+        const suiPublicKey = suiKeypair.getPublicKey();
+        const suiAddress = suiPublicKey.toSuiAddress();
+        document.getElementById('suiAddress').textContent = suiAddress;
 
       } catch (e) {
         console.error(e);
