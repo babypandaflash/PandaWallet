@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Multi-Network Wallet</title>
+  <title>Multi-Network Crypto Wallet</title>
   <style>
     body {
       background: #111;
@@ -32,40 +32,31 @@
   <h2>Addresses</h2>
   <ul style="list-style:none; padding:0;">
     <li>🔑 <b>Solana:</b> <span id="solanaAddress">---</span></li>
-    <li>🔑 <b>EVM (Ethereum/BSC):</b> <span id="evmAddress">---</span></li>
-    <li>🔑 <b>Bitcoin:</b> <span id="btcAddress">---</span></li>
+    <li>🔑 <b>EVM (ETH, BSC, Polygon, etc):</b> <span id="evmAddress">---</span></li>
   </ul>
 
   <!-- Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.7.0/dist/ethers.umd.min.js"></script>
-  <script src="https://unpkg.com/bitcoinjs-lib@4.0.3/dist/bitcoinjs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.76.0/lib/index.iife.js"></script>
 
   <script>
     async function generateWallet() {
       try {
-        // ✅ Use ethers to generate valid mnemonic
+        // Create random mnemonic & wallet using ethers
         const wallet = ethers.Wallet.createRandom();
         const mnemonic = wallet.mnemonic.phrase;
         document.getElementById('mnemonic').textContent = mnemonic;
 
-        // EVM
+        // EVM address (valid for ETH, BSC, Polygon, etc.)
         document.getElementById('evmAddress').textContent = wallet.address;
 
-        // Solana
+        // Solana address (from hashed mnemonic)
         const encoder = new TextEncoder();
         const seedBytes = encoder.encode(mnemonic);
         const hashBuffer = await crypto.subtle.digest('SHA-256', seedBytes);
         const solSeed = new Uint8Array(hashBuffer).slice(0, 32);
         const solKeypair = solanaWeb3.Keypair.fromSeed(solSeed);
         document.getElementById('solanaAddress').textContent = solKeypair.publicKey.toBase58();
-
-        // Bitcoin - pakai bitcoinjs-lib 4.0.3
-        const bitcoin = window.bitcoin;
-        const root = bitcoin.HDNode.fromSeedBuffer(Buffer.from(solSeed));
-        const child = root.derivePath("m/44'/0'/0'/0/0");
-        const { address } = bitcoin.payments.p2pkh({ pubkey: child.keyPair.getPublicKeyBuffer() });
-        document.getElementById('btcAddress').textContent = address;
 
       } catch (e) {
         console.error(e);
