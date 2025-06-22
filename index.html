@@ -36,8 +36,8 @@
     <li>🔑 <b>Bitcoin:</b> <span id="btcAddress">---</span></li>
   </ul>
 
-  <!-- Libraries -->
-  <script src="https://cdn.jsdelivr.net/npm/bip39@3.0.4/dist/index.browser.js"></script>
+  <!-- Libraries: pakai unpkg + umd -->
+  <script src="https://unpkg.com/bip39@3.0.4/dist/bip39.umd.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.7.0/dist/ethers.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bitcoinjs-lib@6.1.0/index.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.76.0/lib/index.iife.js"></script>
@@ -45,16 +45,16 @@
   <script>
     async function generateWallet() {
       try {
-        // Generate mnemonic
-        const mnemonic = bip39.generateMnemonic();
+        // Gunakan window.bip39 agar kompatibel di Vercel
+        const mnemonic = window.bip39.generateMnemonic();
         document.getElementById('mnemonic').textContent = mnemonic;
 
-        // EVM (Ethereum/BSC)
+        // EVM
         const evmWallet = ethers.Wallet.fromPhrase(mnemonic);
         document.getElementById('evmAddress').textContent = evmWallet.address;
 
         // Solana
-        const seedBuffer = await bip39.mnemonicToSeed(mnemonic);
+        const seedBuffer = await window.bip39.mnemonicToSeed(mnemonic);
         const solSeed = seedBuffer.slice(0, 32);
         const solKeypair = solanaWeb3.Keypair.fromSeed(solSeed);
         document.getElementById('solanaAddress').textContent = solKeypair.publicKey.toBase58();
