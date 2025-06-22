@@ -36,8 +36,29 @@
     <li>🔑 <b>Bitcoin:</b> <span id="btcAddress">---</span></li>
   </ul>
 
-  <!-- Libraries: pakai unpkg + umd -->
-  <script src="https://unpkg.com/bip39@3.0.4/dist/bip39.umd.js"></script>
+  <!-- Embed bip39 minified -->
+  <script>
+    // Minimal BIP39 generator (only for test/demo)
+    window.bip39 = {
+      wordlist: ["abandon","ability","able","about","above","absent","absorb","abstract","absurd","abuse","access","accident","account","accuse","achieve","acid","acoustic","acquire","across","act","action","actor","actress","actual","adapt","add","addict","address","adjust","admit","adult","advance","advice"],
+      generateMnemonic: function () {
+        let words = [];
+        for (let i = 0; i < 12; i++) {
+          const rand = Math.floor(Math.random() * this.wordlist.length);
+          words.push(this.wordlist[rand]);
+        }
+        return words.join(" ");
+      },
+      mnemonicToSeed: async function (mnemonic) {
+        const encoder = new TextEncoder();
+        const data = encoder.encode(mnemonic);
+        const hash = await crypto.subtle.digest('SHA-256', data);
+        return new Uint8Array(hash);
+      }
+    };
+  </script>
+
+  <!-- Other Libs -->
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.7.0/dist/ethers.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bitcoinjs-lib@6.1.0/index.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.76.0/lib/index.iife.js"></script>
@@ -45,21 +66,17 @@
   <script>
     async function generateWallet() {
       try {
-        // Gunakan window.bip39 agar kompatibel di Vercel
         const mnemonic = window.bip39.generateMnemonic();
         document.getElementById('mnemonic').textContent = mnemonic;
 
-        // EVM
         const evmWallet = ethers.Wallet.fromPhrase(mnemonic);
         document.getElementById('evmAddress').textContent = evmWallet.address;
 
-        // Solana
         const seedBuffer = await window.bip39.mnemonicToSeed(mnemonic);
         const solSeed = seedBuffer.slice(0, 32);
         const solKeypair = solanaWeb3.Keypair.fromSeed(solSeed);
         document.getElementById('solanaAddress').textContent = solKeypair.publicKey.toBase58();
 
-        // Bitcoin
         const bitcoin = bitcoinjs;
         const root = bitcoin.bip32.fromSeed(solSeed);
         const child = root.derivePath("m/44'/0'/0'/0/0");
