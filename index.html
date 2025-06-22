@@ -2,147 +2,69 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Panda Flash Wallet</title>
-  <script src="https://cdn.jsdelivr.net/npm/ethers/dist/ethers.min.js"></script>
+  <title>Multi-Network Crypto Wallet</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #fefefe;
-      color: #222;
-      margin: 0;
+      background: #0f0f0f;
+      color: #ffffff;
+      text-align: center;
       padding: 20px;
     }
-    .container {
-      max-width: 600px;
-      margin: auto;
-      text-align: center;
-    }
-    h1 {
-      font-size: 22px;
-      margin-bottom: 20px;
-    }
     button {
-      margin: 10px;
       padding: 10px 20px;
-      font-size: 16px;
-      border-radius: 8px;
-      background: #222;
-      color: white;
-      border: none;
+      font-size: 18px;
       cursor: pointer;
     }
-    .back-btn {
-      background: #888;
-    }
-    input {
-      padding: 10px;
-      margin-top: 10px;
-      width: 80%;
-      font-size: 16px;
-    }
-    .info-box {
-      background: #f3f3f3;
-      padding: 15px;
-      margin-top: 20px;
-      border-radius: 10px;
-      word-break: break-word;
-      text-align: center;
-      font-size: 18px;
-    }
-    .info-box strong {
-      color: #444;
-    }
-    .page {
-      display: none;
-    }
-    .page.active {
-      display: block;
+    p, li {
+      word-break: break-all;
     }
   </style>
 </head>
 <body>
-  <div class="container">
+  <h1>Multi-Network Crypto Wallet</h1>
+  <button id="generateBtn">Generate New Wallet</button>
 
-    <!-- PAGE: Home -->
-    <div id="homePage" class="page active">
-      <h1>Panda Flash Wallet – Powered by BabyPanda Flash $BPF</h1>
+  <h2>Seed Phrase:</h2>
+  <p id="mnemonic"></p>
 
-      <button onclick="handleCreateWallet()">🧠 Create Wallet</button>
-      <button onclick="goToPage('importPage')">📥 Import Wallet</button>
-    </div>
+  <h2>Addresses:</h2>
+  <ul>
+    <li>🔑 Solana: <span id="solanaAddress"></span></li>
+    <li>🔑 EVM (Ethereum, BSC): <span id="evmAddress"></span></li>
+    <li>🔑 Bitcoin: <span id="btcAddress"></span></li>
+  </ul>
 
-    <!-- PAGE: Back Up Mnemonics (Tetap disatukan) -->
-    <div id="createPage" class="page">
-      <h1>🔐 Back Up Mnemonics</h1>
-      <div id="mnemonicBox" class="info-box">Mnemonic phrase akan muncul di sini...</div>
-      <button onclick="copyMnemonics()">📋 Copy Mnemonics</button><br/>
-      <button class="back-btn" onclick="goToPage('homePage')">⬅ Back</button>
-    </div>
+  <!-- LIBRARIES -->
+  <script src="https://cdn.jsdelivr.net/npm/bip39@3.0.4/dist/index.browser.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.7.0/dist/ethers.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bitcoinjs-lib@6.1.0/index.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.76.0/lib/index.iife.js"></script>
 
-    <!-- PAGE: Import Wallet -->
-    <div id="importPage" class="page">
-      <h1>Import Wallet</h1>
-      <input type="text" id="importInput" placeholder="Enter Mnemonic or Private Key" /><br/>
-      <button onclick="importWallet()">Import Now</button>
-      <div id="importResult" class="info-box"></div>
-      <button class="back-btn" onclick="goToPage('homePage')">⬅ Back</button>
-    </div>
-
-  </div>
-
+  <!-- ALL LOGIC INLINE -->
   <script>
-    let currentWallet = null;
-    let generatedMnemonic = '';
+    document.getElementById("generateBtn").onclick = async () => {
+      // Generate mnemonic
+      const mnemonic = bip39.generateMnemonic();
+      document.getElementById("mnemonic").innerText = mnemonic;
 
-    function goToPage(pageId) {
-      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-      document.getElementById(pageId).classList.add('active');
-    }
+      // ===== EVM (Ethereum, BSC, etc.) =====
+      const evmWallet = ethers.Wallet.fromPhrase(mnemonic);
+      document.getElementById("evmAddress").innerText = evmWallet.address;
 
-    function handleCreateWallet() {
-      const wallet = ethers.Wallet.createRandom();
-      currentWallet = wallet;
-      generatedMnemonic = wallet.mnemonic.phrase;
+      // ===== Solana =====
+      const seed = await bip39.mnemonicToSeed(mnemonic);
+      const seedBuffer = seed.slice(0, 32);
+      const solanaKeypair = solanaWeb3.Keypair.fromSeed(seedBuffer);
+      document.getElementById("solanaAddress").innerText = solanaKeypair.publicKey.toBase58();
 
-      document.getElementById("mnemonicBox").innerHTML = `<strong>${generatedMnemonic}</strong>`;
-      goToPage('createPage');
-    }
-
-    function copyMnemonics() {
-      if (!generatedMnemonic) {
-        alert("No mnemonic to copy.");
-        return;
-      }
-      navigator.clipboard.writeText(generatedMnemonic)
-        .then(() => alert("Mnemonic copied to clipboard!"))
-        .catch(() => alert("Failed to copy mnemonic."));
-    }
-
-    function importWallet() {
-      const input = document.getElementById("importInput").value.trim();
-      const output = document.getElementById("importResult");
-
-      try {
-        let wallet;
-
-        if (input.split(" ").length >= 12) {
-          wallet = ethers.Wallet.fromMnemonic(input);
-        } else {
-          wallet = new ethers.Wallet(input);
-        }
-
-        currentWallet = wallet;
-
-        output.innerHTML = `
-          <h3>Wallet Imported (Ethereum/EVM)</h3>
-          <p><strong>Address:</strong> ${wallet.address}</p>
-          <p><strong>Private Key:</strong> ${wallet.privateKey}</p>
-        `;
-      } catch (e) {
-        output.innerHTML = `<p style="color:red;">Invalid mnemonic or private key.</p>`;
-      }
-    }
+      // ===== Bitcoin =====
+      const bitcoin = bitcoinjs;
+      const root = bitcoin.bip32.fromSeed(seedBuffer);
+      const child = root.derivePath("m/44'/0'/0'/0/0");
+      const { address } = bitcoin.payments.p2pkh({ pubkey: child.publicKey });
+      document.getElementById("btcAddress").innerText = address;
+    };
   </script>
 </body>
 </html>
